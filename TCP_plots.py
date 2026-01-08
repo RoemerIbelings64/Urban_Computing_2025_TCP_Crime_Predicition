@@ -1,3 +1,5 @@
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import math
 import holidays
 import numpy as np
@@ -407,7 +409,7 @@ def tcp_loss_extended(model, X, Y, H, train_idx, neighbor_indices, masks,
     if W_train.shape[0] > 7:
         W_t7  = W_train[7:, :, :]
         W_tm7 = W_train[:-7, :, :]
-        weekly_loss = torch.mean(torch.abs(W_t7 - W_tm7))
+        weekly_loss = torch.mean((W_t7 - W_tm7) ** 2)
     else:
         weekly_loss = torch.tensor(0.0, device=W_train.device)
 
@@ -2043,7 +2045,7 @@ if __name__ == "__main__":
     neighbor_indices = process_neighbor_indices(neighbor_pairs, device=device)
 
     # Sliding-window / alpha-stage configuration (paper uses alpha forecasting)
-    alpha_window = 7
+    alpha_window = 28
     alpha_ridge = 1e-3
 
     # Training budget controls:
@@ -2285,7 +2287,7 @@ if __name__ == "__main__":
         columns=["baseline", "weekly", "daytype", "holiday", "all_three"],
         labels=["Baseline", "Weekly", "Day-type", "Holiday", "All three"],
         title="Rolling CV Test Comparison (Mean ± Std)",
-        output_path="rolling_test_comparison.png",
+        output_path="result/rolling_test_comparison.png",
     )
 
     plot_rolling_summary(
@@ -2293,7 +2295,7 @@ if __name__ == "__main__":
         columns=["baseline", "weekly_daytype", "weekly_holiday", "daytype_holiday", "all_three"],
         labels=["Baseline", "Weekly+Daytype", "Weekly+Holiday", "Daytype+Holiday", "All three"],
         title="Rolling CV Test Combo Comparison (Mean ± Std)",
-        output_path="rolling_test_combos.png",
+        output_path="result/rolling_test_combos.png",
     )
 
     plot_rolling_summary(
@@ -2301,17 +2303,17 @@ if __name__ == "__main__":
         columns=["baseline_val", "weekly_val", "daytype_val", "holiday_val", "all_three_val"],
         labels=["Baseline", "Weekly", "Day-type", "Holiday", "All three"],
         title="Rolling CV Validation Tuning (Mean ± Std)",
-        output_path="rolling_val_comparison.png",
+        output_path="result/rolling_val_comparison.png",
     )
 
     agg_baseline_history = aggregate_grid_history(
         baseline_histories, ["lam", "mu"]
     )
     if agg_baseline_history:
-        visualize_baseline_grid(agg_baseline_history, "rolling_baseline_grid.png")
+        visualize_baseline_grid(agg_baseline_history, "result/rolling_baseline_grid.png")
         visualize_baseline_sensitivity(
             agg_baseline_history,
-            output_path="rolling_baseline_sensitivity.png"
+            output_path="result/rolling_baseline_sensitivity.png"
         )
 
     agg_extended_history = aggregate_grid_history(
@@ -2319,17 +2321,17 @@ if __name__ == "__main__":
         ["lam", "lam7", "mu_wd", "mu_fri", "mu_we", "gamma"]
     )
     if agg_extended_history:
-        visualize_extended_grid(agg_extended_history, "rolling_extended_grid.png")
+        visualize_extended_grid(agg_extended_history, "result/rolling_extended_grid.png")
 
     agg_impacts = aggregate_extension_impacts_histories(extension_impacts_list)
     if agg_impacts:
         visualize_extension_parameter_sensitivity(
             agg_impacts,
-            output_path="rolling_extension_parameter_sensitivity.png"
+            output_path="result/rolling_extension_parameter_sensitivity.png"
         )
         visualize_extension_baseline_tuning(
             agg_impacts,
-            output_path="rolling_extension_baseline_tuning.png"
+            output_path="result/rolling_extension_baseline_tuning.png"
         )
 
     # Paper qualitative figure: baseline spatial distribution for the first test day
